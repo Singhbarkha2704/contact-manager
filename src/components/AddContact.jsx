@@ -1,11 +1,41 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import {
+  editContact,
+  retrieveContacts,
+  retrieveSingleContact,
+} from "../api/contacts";
 
 const AddContact = (props) => {
   const navigate = useNavigate();
+  const paramId = useParams();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [editName, setEditName] = useState("");
+  const [editEmail, setEditEmail] = useState("");
+  console.log(paramId);
 
+  // (async (param) => {
+  //   const res = await retrieveSingleContact(param);
+  //   console.log(res);
+  //   setEditName(res.name);
+  //   setEditEmail(res.email);
+  //   console.log(editEmail, editName);
+  // })(paramId.id);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      if (paramId.id) {
+        const res = await retrieveSingleContact(paramId.id);
+        setEditName(res.name);
+        setEditEmail(res.email);
+      }
+    };
+
+    fetchData();
+  }, [paramId.id]);
+
+  //fn to add contact - send prop to parent i.e. obj of contact
   const add = (event) => {
     event.preventDefault();
     if (name === "" && email === "") {
@@ -22,18 +52,57 @@ const AddContact = (props) => {
     navigate("/");
   };
 
+  //on change of name
+  const handleNameChange = (event) => {
+    !paramId?.id
+      ? setName(event.target.value)
+      : setEditName(event.target.value);
+  };
+
+  //on change of Email
+  const handleEmailChange = (event) => {
+    !paramId?.id
+      ? setEmail(event.target.value)
+      : setEditEmail(event.target.value);
+  };
+
+  // console.log(`singleCont`, singleCont);
+
+  //on Edit Button Click
+  const updateHandler = async (event) => {
+    event.preventDefault();
+    const res = await editContact(paramId.id, {
+      name: editName,
+      email: editEmail,
+    });
+    console.log(res.data);
+
+    const all = await retrieveContacts();
+    console.log(`all`, all);
+    if (res) {
+      const updatedContacts = props.contacts.map((elem) =>
+        elem.id === paramId.id ? { ...res.data } : elem
+      );
+      props.setContacts(updatedContacts);
+    }
+    console.log(`contacts`, props.contacts);
+    navigate("/");
+  };
+
   return (
     <div className="ui main width-form">
-      <h2>Add Contact</h2>
-      <form className="ui form" onSubmit={add}>
+      {!paramId.id ? <h2>Add Contact</h2> : <h2>Edit Contact</h2>}
+
+      {/* edit/create form */}
+      <form className="ui form" onSubmit={!paramId.id ? add : updateHandler}>
         <div className="field">
           <label>Name</label>
           <input
             type="text"
             name="name"
             placeholder="Enter Name"
-            value={name}
-            onChange={(event) => setName(event.target.value)}
+            value={paramId.id ? editName : name}
+            onChange={handleNameChange}
           />
         </div>
         <div className="ui field">
@@ -42,11 +111,17 @@ const AddContact = (props) => {
             type="email"
             name="email"
             placeholder="Enter Email"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
+            value={paramId.id ? editEmail : email}
+            onChange={handleEmailChange}
           />
         </div>
-        <button className="ui button blue">Add</button>
+
+        {/* Add or Edit Button */}
+        {!paramId.id ? (
+          <button className="ui button blue">Add</button>
+        ) : (
+          <button className="ui button blue">Edit</button>
+        )}
       </form>
     </div>
   );

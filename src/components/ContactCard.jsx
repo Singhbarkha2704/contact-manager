@@ -13,11 +13,18 @@ const ContactCard = (props) => {
           <div>{email}</div>
         </Link>
       </div>
+
       <i
         className="trash alternate outline icon"
         style={{ color: "red", marginTop: "7px" }}
         onClick={() => props.clickHandler(id)}
       />
+      <Link to={`/edit/${id}`}>
+        <i
+          className="edit alternate outline icon"
+          style={{ color: "blue", marginTop: "7px", marginRight: "15px" }}
+        />
+      </Link>
     </div>
   );
 };
